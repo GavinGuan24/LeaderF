@@ -82,6 +82,8 @@ class RgExplorer(Explorer):
             zero_args_options += "--no-pcre2-unicode "
 
         one_args_options = ''
+        if "-C" in kwargs.get("arguments", {}):
+            one_args_options += '-C %s --context-separator="..."' % kwargs.get("arguments", {})["-C"][0]
         if "-E" in kwargs.get("arguments", {}):
             one_args_options += "-E %s " % kwargs.get("arguments", {})["-E"][0]
         if "-M" in kwargs.get("arguments", {}):
@@ -353,6 +355,9 @@ class RgExplManager(Manager):
             return
 
         line = args[0]
+        if re.match(r'^\.\.\.$', line):
+            return
+
         m = re.match(r'(.+?):(\d+):', line)
         file, line_num = m.group(1, 2)
         if file.startswith('+'):
@@ -429,9 +434,11 @@ class RgExplManager(Manager):
 
     def _afterEnter(self):
         super(RgExplManager, self)._afterEnter()
-        id = int(lfEval("matchadd('Lf_hl_rgFileName', '^.\{-}\ze:\d', 10)"))
+        id = int(lfEval("matchadd('Lf_hl_rgFileName', '^.\{-}\ze[:-]\d', 10)"))
         self._match_ids.append(id)
         id = int(lfEval("matchadd('Lf_hl_rgLineNumber', '^.\{-}\zs:\d\+:', 10)"))
+        self._match_ids.append(id)
+        id = int(lfEval("matchadd('Lf_hl_rgLineNumber2', '^.\{-}\zs-\d\+-', 10)"))
         self._match_ids.append(id)
         if self._has_column:
             id = int(lfEval("matchadd('Lf_hl_rgColumnNumber', '^.\{-}:\d\+:\zs\d\+:', 10)"))
