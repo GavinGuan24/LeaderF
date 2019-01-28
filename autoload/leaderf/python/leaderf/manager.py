@@ -1177,6 +1177,7 @@ class Manager(object):
         self.setArguments(kwargs.get("arguments", {}))
         self._cli.setNameOnlyFeature(self._getExplorer().supportsNameOnly())
         self._cli.setRefineFeature(self._supportsRefine())
+
         # lfCmd("echohl WarningMsg | redraw | echo ' searching ...' | echohl NONE")
         if self._getExplorer().getStlCategory() in ["Rg"] and "--recall" in self._arguments:
             content = self._content
@@ -1188,6 +1189,10 @@ class Manager(object):
             return
 
         self._getInstance().setArguments(self._arguments)
+        if self._getExplorer().getStlCategory() in ["Rg"] and ("-A" in kwargs.get("arguments", {}) \
+                or "-B" in kwargs.get("arguments", {}) or "-C" in kwargs.get("arguments", {})):
+            self._getInstance().ignoreReverse()
+
         self._getInstance().enterBuffer(win_pos)
         self._initial_count = self._getInstance().getInitialWinHeight()
 

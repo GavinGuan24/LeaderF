@@ -91,7 +91,6 @@ class RgExplorer(Explorer):
         if "--no-pcre2-unicode" in kwargs.get("arguments", {}):
             zero_args_options += "--no-pcre2-unicode "
 
-        print(kwargs)
         one_args_options = ''
         if "--context-separator" in kwargs.get("arguments", {}):
             self._context_separator = kwargs.get("arguments", {})["--context-separator"][0]
@@ -375,7 +374,7 @@ class RgExplManager(Manager):
             return
 
         line = args[0]
-        m = re.match(r'(.+?):(\d+):', line)
+        m = re.match(r'(.+?)[:-](\d+)[:-]', line)
         file, line_num = m.group(1, 2)
         if file.startswith('+'):
             file = os.path.abspath(file)
