@@ -83,6 +83,8 @@ let g:Lf_Arguments = {
             \ "self":[],
             \ "rg":[
             \           {"name": ["--context-separator"], "nargs": 1, "metavar": "<SEPARATOR>", "help": "The string used to separate non-contiguous context lines in the output."},
+            \           {"name": ["-A", "--after-context"], "nargs": 1, "metavar": "<NUM>", "help": "Show NUM lines after each match."},
+            \           {"name": ["-B", "--before-context"], "nargs": 1, "metavar": "<NUM>", "help": "Show NUM lines before each match."},
             \           {"name": ["-C", "--context"], "nargs": 1, "metavar": "<NUM>", "help": "Show NUM lines before and after each match."},
             \           {"name": ["-e", "--regexp"], "action": "append", "metavar": "<PATTERN>...",
             \               "help": "A pattern to search for. This option can be provided multiple times, where all patterns given are searched."},
