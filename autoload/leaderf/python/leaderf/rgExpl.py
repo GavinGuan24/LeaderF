@@ -20,10 +20,20 @@ class RgExplorer(Explorer):
     def __init__(self):
         self._executor = []
         self._pattern_regex = []
+        self._context_separator = "..."
 
     def getContent(self, *args, **kwargs):
         if "--recall" in kwargs.get("arguments", {}):
             return []
+
+        rg_config = lfEval("get(g:, 'Lf_RgConfig', [])")
+        extra_options = ' '.join(rg_config)
+        for opt in rg_config:
+            opt = opt.strip()
+            if opt.startswith("--context-separator"):
+                self._context_separator = re.split(r'=|\s+', opt)[1]
+                if self._context_separator.startswith('"') and self._context_separator.endswith('"'):
+                    self._context_separator = self._context_separator[1:-1]
 
         arg_line = kwargs.get("arguments", {}).get("arg_line")
         # -S/--smart-case, -s/--case-sensitive, -i/--ignore-case
@@ -81,9 +91,17 @@ class RgExplorer(Explorer):
         if "--no-pcre2-unicode" in kwargs.get("arguments", {}):
             zero_args_options += "--no-pcre2-unicode "
 
+        print(kwargs)
         one_args_options = ''
+        if "--context-separator" in kwargs.get("arguments", {}):
+            self._context_separator = kwargs.get("arguments", {})["--context-separator"][0]
+            if self._context_separator.startswith('"') and self._context_separator.endswith('"'):
+                self._context_separator = self._context_separator[1:-1]
+            one_args_options += '--context-separator="%s" ' % self._context_separator
+        else:
+            one_args_options += "--context-separator=%s " % self._context_separator
         if "-C" in kwargs.get("arguments", {}):
-            one_args_options += '-C %s --context-separator="..."' % kwargs.get("arguments", {})["-C"][0]
+            one_args_options += "-C %s " % kwargs.get("arguments", {})["-C"][0]
         if "-E" in kwargs.get("arguments", {}):
             one_args_options += "-E %s " % kwargs.get("arguments", {})["-E"][0]
         if "-M" in kwargs.get("arguments", {}):
@@ -226,10 +244,9 @@ class RgExplorer(Explorer):
 
         executor = AsyncExecutor()
         self._executor.append(executor)
-        extra_options = ' '.join(lfEval("get(g:, 'Lf_RgConfig', [])"))
-        cmd = '''rg --no-config --no-ignore-messages --no-heading --with-filename --color never --line-number '''\
-                '''{} {}{}{}{}{} {}{}'''.format(case_flag, word_or_line, zero_args_options,
-                                                  one_args_options, repeatable_options, extra_options, lfDecode(pattern), path)
+        cmd = '''rg {} --no-config --no-ignore-messages --no-heading --with-filename --color never --line-number '''\
+                '''{} {}{}{}{}{}{}'''.format(extra_options, case_flag, word_or_line, zero_args_options,
+                                                  one_args_options, repeatable_options, lfDecode(pattern), path)
         lfCmd("let g:Lf_Debug_RgCmd = '%s'" % escQuote(cmd))
         content = executor.execute(cmd, encoding=lfEval("&encoding"), cleanup=partial(removeFiles, tmpfilenames))
         return content
@@ -333,6 +350,9 @@ class RgExplorer(Explorer):
     def getPatternRegex(self):
         return self._pattern_regex
 
+    def getContextSeparator(self):
+        return self._context_separator
+
 
 #*****************************************************
 # RgExplManager
@@ -355,9 +375,6 @@ class RgExplManager(Manager):
             return
 
         line = args[0]
-        if re.match(r'^\.\.\.$', line):
-            return
-
         m = re.match(r'(.+?):(\d+):', line)
         file, line_num = m.group(1, 2)
         if file.startswith('+'):
