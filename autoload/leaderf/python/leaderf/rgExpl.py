@@ -389,7 +389,7 @@ class RgExplManager(Manager):
             return
 
         line = args[0]
-        m = re.match(r'(.+?)[:-](\d+)[:-]', line)
+        m = re.match(r'^(.+?)[:-](\d+)[:-]', line)
         file, line_num = m.group(1, 2)
         if file.startswith('+'):
             file = os.path.abspath(file)
@@ -428,7 +428,20 @@ class RgExplManager(Manager):
             return line
         else:
             if self._getExplorer().displayMulti():
-                pass
+                if line == self._getExplorer().getContextSeparator():
+                    return ""
+
+                if self._has_column:
+                    m = re.match(r'^.+?[:-]\d+[:-]', line)
+                    file_lineno = m.group(0)
+                    if file_lineno.endswith(':'):
+                        index = line.find(':', len(file_lineno))
+                        return line[index+1:]
+                    else:
+                        return line[len(file_lineno):]
+                else:
+                    m = re.match(r'^.+?[:-]\d+[:-]', line)
+                    return line[len(m.group(0)):]
             else:
                 if self._has_column:
                     return line.split(":", 3)[-1]
@@ -447,7 +460,20 @@ class RgExplManager(Manager):
             return 0
         else:
             if self._getExplorer().displayMulti():
-                pass
+                if line == self._getExplorer().getContextSeparator():
+                    return len(line)
+
+                if self._has_column:
+                    m = re.match(r'^.+?[:-]\d+[:-]', line)
+                    file_lineno = m.group(0)
+                    if file_lineno.endswith(':'):
+                        index = line.find(':', len(file_lineno))
+                        return lfBytesLen(line[:index + 1])
+                    else:
+                        return lfBytesLen(file_lineno)
+                else:
+                    m = re.match(r'^.+?[:-]\d+[:-]', line)
+                    return lfBytesLen(m.group(0))
             else:
                 if self._has_column:
                     file_path, line_num, column, content = line.split(":", 3)
